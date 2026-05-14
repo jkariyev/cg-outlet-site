@@ -422,13 +422,12 @@ document.getElementById('sidebar-overlay').addEventListener('click', closeSideba
 
 // ── Init ──────────────────────────────────────────────
 
-const PRODUCTS_URL = 'https://api.github.com/repos/jkariyev/cg-outlet-data/contents/products.json';
+const PRODUCTS_URL = 'https://admin.thecgoutlet.com/api/products';
 
 async function init() {
   updateCartBadge();
   try {
     const res = await fetch(PRODUCTS_URL, {
-      headers: { Accept: 'application/vnd.github.v3.raw' },
       cache: 'no-store',
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
