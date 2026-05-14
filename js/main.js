@@ -422,12 +422,15 @@ document.getElementById('sidebar-overlay').addEventListener('click', closeSideba
 
 // ── Init ──────────────────────────────────────────────
 
-const PRODUCTS_URL = 'https://raw.githubusercontent.com/jkariyev/cg-outlet-data/main/products.json';
+const PRODUCTS_URL = 'https://api.github.com/repos/jkariyev/cg-outlet-data/contents/products.json';
 
 async function init() {
   updateCartBadge();
   try {
-    const res = await fetch(PRODUCTS_URL + '?t=' + Date.now());
+    const res = await fetch(PRODUCTS_URL, {
+      headers: { Accept: 'application/vnd.github.v3.raw' },
+      cache: 'no-store',
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const products = await res.json();
     if (!Array.isArray(products)) throw new Error('Invalid response');
