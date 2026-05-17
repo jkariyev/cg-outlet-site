@@ -369,8 +369,12 @@ function renderModalImages(product, selectedColorName) {
     thumbsContainer.innerHTML = '';
     return;
   }
-  mainImg.src = esc(images[0]);
+  mainImg.src = images[0];
   mainImg.alt = product.name;
+  if (images.length <= 1) {
+    thumbsContainer.innerHTML = '';
+    return;
+  }
   thumbsContainer.innerHTML = images.map((img, i) => `
     <div class="modal-thumb${i === 0 ? ' active' : ''}" data-img="${esc(img)}">
       <img src="${esc(img)}" alt="">
