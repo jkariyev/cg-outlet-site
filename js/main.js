@@ -356,37 +356,77 @@ function renderModalSizes(product) {
 function renderModalImages(product, selectedColorName) {
   const mainImg = document.getElementById('modal-main-img');
   const thumbsContainer = document.getElementById('modal-thumbs');
-  const color = (product.colors || []).find(c => c.name === selectedColorName);
+  const prevBtn = document.getElementById('modal-img-prev');
+  const nextBtn = document.getElementById('modal-img-next');
+  const imageArea = mainImg.parentElement;
+
+  // Match by active label + name so same color name in different labels works correctly
+  const allColors = product.colors || [];
+  const activeLabel = activeModal ? activeModal.selectedLabel : null;
+  let color = activeLabel
+    ? allColors.find(c => c.name === selectedColorName && c.label === activeLabel)
+    : null;
+  if (!color) color = allColors.find(c => c.name === selectedColorName);
+
   let images = color && color.images && color.images.length ? color.images : [];
   if (!images.length) {
-    for (const c of (product.colors || [])) {
+    for (const c of allColors) {
       if (c.images && c.images.length) { images = c.images; break; }
     }
   }
+
+  // Hide nav, clear thumbs when no images
   if (!images.length) {
     mainImg.removeAttribute('src'); mainImg.alt = '';
-    mainImg.parentElement.style.background = 'var(--surface)';
+    imageArea.style.background = 'var(--surface)';
     thumbsContainer.innerHTML = '';
+    if (prevBtn) prevBtn.style.display = 'none';
+    if (nextBtn) nextBtn.style.display = 'none';
+    imageArea.ontouchstart = null; imageArea.ontouchend = null;
     return;
   }
+
+  let currentIdx = 0;
+
+  function goTo(idx) {
+    currentIdx = ((idx % images.length) + images.length) % images.length;
+    mainImg.src = images[currentIdx];
+    thumbsContainer.querySelectorAll('.modal-thumb').forEach((t, i) => {
+      t.classList.toggle('active', i === currentIdx);
+    });
+  }
+
   mainImg.src = images[0];
   mainImg.alt = product.name;
+
   if (images.length <= 1) {
     thumbsContainer.innerHTML = '';
+    if (prevBtn) prevBtn.style.display = 'none';
+    if (nextBtn) nextBtn.style.display = 'none';
+    imageArea.ontouchstart = null; imageArea.ontouchend = null;
     return;
   }
+
+  // Thumbnails
   thumbsContainer.innerHTML = images.map((img, i) => `
     <div class="modal-thumb${i === 0 ? ' active' : ''}" data-img="${esc(img)}">
       <img src="${esc(img)}" alt="">
     </div>
   `).join('');
-  thumbsContainer.querySelectorAll('.modal-thumb').forEach(thumb => {
-    thumb.addEventListener('click', () => {
-      mainImg.src = thumb.dataset.img;
-      thumbsContainer.querySelectorAll('.modal-thumb').forEach(t => t.classList.remove('active'));
-      thumb.classList.add('active');
-    });
+  thumbsContainer.querySelectorAll('.modal-thumb').forEach((thumb, i) => {
+    thumb.addEventListener('click', () => goTo(i));
   });
+
+  // Prev / next arrows
+  if (prevBtn) { prevBtn.style.display = ''; prevBtn.onclick = () => goTo(currentIdx - 1); }
+  if (nextBtn) { nextBtn.style.display = ''; nextBtn.onclick = () => goTo(currentIdx + 1); }
+
+  // Swipe
+  imageArea.ontouchstart = e => { imageArea._swipeX = e.touches[0].clientX; };
+  imageArea.ontouchend = e => {
+    const dx = e.changedTouches[0].clientX - (imageArea._swipeX || 0);
+    if (Math.abs(dx) > 50) goTo(dx < 0 ? currentIdx + 1 : currentIdx - 1);
+  };
 }
 
 function updateModalButtons() {
